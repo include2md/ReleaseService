@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Release Service Demo</title>
+  <style>
+    :root {
+      --bg: #f6f8fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --primary: #0f766e;
+      --primary-hover: #115e59;
+      --border: #e5e7eb;
+      --ok: #065f46;
+      --err: #b91c1c;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Noto Sans TC", "PingFang TC", sans-serif;
+      color: var(--text);
+      background: linear-gradient(160deg, #f0f9ff 0%, var(--bg) 35%, #ecfeff 100%);
+      min-height: 100vh;
+    }
+
+    .wrap {
+      max-width: 980px;
+      margin: 32px auto;
+      padding: 0 16px 32px;
+    }
+
+    h1 {
+      margin: 0 0 12px;
+      font-size: 28px;
+      letter-spacing: 0.2px;
+    }
+
+    .tip {
+      margin: 0 0 20px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+    }
+
+    .card h2 {
+      margin: 0 0 12px;
+      font-size: 18px;
+    }
+
+    .row {
+      margin-bottom: 10px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      margin-bottom: 4px;
+      color: var(--muted);
+    }
+
+    input {
+      width: 100%;
+      padding: 10px 11px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    button {
+      width: 100%;
+      border: none;
+      background: var(--primary);
+      color: #fff;
+      padding: 11px 14px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 6px;
+    }
+
+    button:hover { background: var(--primary-hover); }
+
+    .log {
+      margin-top: 14px;
+      background: #0b1220;
+      color: #e5e7eb;
+      border-radius: 8px;
+      padding: 10px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      min-height: 120px;
+    }
+
+    .status { font-size: 13px; margin-top: 10px; font-weight: 700; }
+    .status.ok { color: var(--ok); }
+    .status.err { color: var(--err); }
+
+    .asset-preview {
+      margin-top: 12px;
+      border: 1px dashed var(--border);
+      border-radius: 8px;
+      padding: 10px;
+      background: #fcfcfd;
+      min-height: 70px;
+      font-size: 13px;
+      overflow: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Release Service Demo</h1>
+    <p class="tip">若直接雙擊開啟此檔遇到 CORS，請改用 `python -m http.server` 或任一靜態伺服器啟動。</p>
+
+    <div class="grid">
+      <section class="card">
+        <h2>Upload Release</h2>
+        <div class="row">
+          <label for="baseUrl">Base URL</label>
+          <input id="baseUrl" value="http://localhost:8080" />
+        </div>
+        <div class="row">
+          <label for="token">Bearer Token</label>
+          <input id="token" value="local-dev-token" />
+        </div>
+        <div class="row">
+          <label for="appName">app_name</label>
+          <input id="appName" value="my-app" />
+        </div>
+        <div class="row">
+          <label for="version">version</label>
+          <input id="version" value="1.2.3" />
+        </div>
+        <div class="row">
+          <label for="environment">environment</label>
+          <input id="environment" value="prod" />
+        </div>
+        <div class="row">
+          <label for="artifact">artifact (.zip)</label>
+          <input id="artifact" type="file" accept=".zip,application/zip" />
+        </div>
+        <button id="uploadBtn" type="button">Upload Release</button>
+        <div id="uploadStatus" class="status"></div>
+        <div id="uploadLog" class="log"></div>
+      </section>
+
+      <section class="card">
+        <h2>Fetch Asset</h2>
+        <div class="row">
+          <label for="assetApp">app</label>
+          <input id="assetApp" value="my-app" />
+        </div>
+        <div class="row">
+          <label for="assetVersion">version</label>
+          <input id="assetVersion" value="1.2.3" />
+        </div>
+        <div class="row">
+          <label for="assetEnv">env</label>
+          <input id="assetEnv" value="prod" />
+        </div>
+        <div class="row">
+          <label for="assetPath">path</label>
+          <input id="assetPath" value="index.html" />
+        </div>
+
+        <button id="fetchBtn" type="button">Fetch Asset</button>
+        <div id="fetchStatus" class="status"></div>
+        <div id="fetchLog" class="log"></div>
+        <div id="assetPreview" class="asset-preview">(asset preview)</div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    function setStatus(el, ok, text) {
+      el.className = `status ${ok ? 'ok' : 'err'}`;
+      el.textContent = text;
+    }
+
+    function safeJson(text) {
+      try { return JSON.parse(text); } catch { return null; }
+    }
+
+    $('uploadBtn').addEventListener('click', async () => {
+      const baseUrl = $('baseUrl').value.trim();
+      const token = $('token').value.trim();
+      const appName = $('appName').value.trim();
+      const version = $('version').value.trim();
+      const environment = $('environment').value.trim();
+      const file = $('artifact').files[0];
+
+      if (!file) {
+        setStatus($('uploadStatus'), false, '請先選擇 zip 檔');
+        return;
+      }
+
+      const fd = new FormData();
+      fd.append('app_name', appName);
+      fd.append('version', version);
+      fd.append('environment', environment);
+      fd.append('artifact', file);
+
+      $('uploadLog').textContent = 'Sending request...';
+      setStatus($('uploadStatus'), true, 'Uploading...');
+
+      try {
+        const res = await fetch(`${baseUrl}/api/v1/releases`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: fd,
+        });
+
+        const text = await res.text();
+        const json = safeJson(text);
+        $('uploadLog').textContent = JSON.stringify({
+          request: {
+            url: `${baseUrl}/api/v1/releases`,
+            method: 'POST',
+            app_name: appName,
+            version,
+            environment,
+            artifact: file.name
+          },
+          response: {
+            status: res.status,
+            body: json || text
+          }
+        }, null, 2);
+
+        setStatus($('uploadStatus'), res.ok, res.ok ? 'Upload success' : `Upload failed (${res.status})`);
+      } catch (err) {
+        setStatus($('uploadStatus'), false, 'Upload failed (network/CORS)');
+        $('uploadLog').textContent = String(err);
+      }
+    });
+
+    $('fetchBtn').addEventListener('click', async () => {
+      const baseUrl = $('baseUrl').value.trim();
+      const app = $('assetApp').value.trim();
+      const version = $('assetVersion').value.trim();
+      const env = $('assetEnv').value.trim();
+      const path = $('assetPath').value.trim().replace(/^\//, '');
+
+      const url = `${baseUrl}/assets/${encodeURIComponent(app)}/${encodeURIComponent(version)}/${path}?env=${encodeURIComponent(env)}`;
+      $('fetchLog').textContent = 'Sending request...';
+      setStatus($('fetchStatus'), true, 'Fetching...');
+
+      try {
+        const res = await fetch(url);
+        const bodyText = await res.text();
+        $('fetchLog').textContent = JSON.stringify({
+          request: { url, method: 'GET' },
+          response: {
+            status: res.status,
+            contentType: res.headers.get('content-type'),
+            cacheControl: res.headers.get('cache-control')
+          }
+        }, null, 2);
+
+        if (res.ok) {
+          setStatus($('fetchStatus'), true, `Fetch success (${res.status})`);
+          $('assetPreview').textContent = bodyText.slice(0, 3000);
+        } else {
+          setStatus($('fetchStatus'), false, `Fetch failed (${res.status})`);
+          $('assetPreview').textContent = bodyText;
+        }
+      } catch (err) {
+        setStatus($('fetchStatus'), false, 'Fetch failed (network/CORS)');
+        $('fetchLog').textContent = String(err);
+        $('assetPreview').textContent = '(error)';
+      }
+    });
+  </script>
+</body>
+</html>
