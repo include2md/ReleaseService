@@ -90,6 +90,18 @@ func buildPrefix(environment, app, version string) string {
 	return path.Join(environment, app, version)
 }
 
+func (s *ReleaseService) ListAvailableVersions(ctx context.Context, appName, environment string) ([]string, error) {
+	releases, err := s.repo.ListActiveByAppEnvironment(ctx, appName, environment)
+	if err != nil {
+		return nil, err
+	}
+	versions := make([]string, 0, len(releases))
+	for _, r := range releases {
+		versions = append(versions, r.Version)
+	}
+	return versions, nil
+}
+
 func (s *ReleaseService) rotateOldReleases(ctx context.Context, appName, environment string) error {
 	activeReleases, err := s.repo.ListActiveByAppEnvironment(ctx, appName, environment)
 	if err != nil {

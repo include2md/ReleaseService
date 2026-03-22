@@ -16,6 +16,7 @@ var ErrReleaseAlreadyExists = service.ErrReleaseAlreadyExists
 
 type ReleaseService interface {
 	CreateRelease(ctx context.Context, in service.ReleaseInput) error
+	ListAvailableVersions(ctx context.Context, appName, environment string) ([]string, error)
 }
 
 type ReleaseHandler struct {
@@ -92,5 +93,27 @@ func (h *ReleaseHandler) Upload(c *gin.Context) {
 		"version":     version,
 		"environment": env,
 		"status":      "success",
+	})
+}
+
+func (h *ReleaseHandler) ListVersions(c *gin.Context) {
+	app := c.Param("app")
+	environment := c.Query("environment")
+	if app == "" || environment == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "app and environment are required"})
+		return
+	}
+
+	versions, err := h.svc.ListAvailableVersions(c.Request.Context(), app, environment)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to list versions"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success":     true,
+		"app_name":    app,
+		"environment": environment,
+		"versions":    versions,
 	})
 }

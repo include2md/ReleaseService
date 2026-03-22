@@ -7,6 +7,7 @@ import (
 
 type ReleaseHandler interface {
 	Upload(c *gin.Context)
+	ListVersions(c *gin.Context)
 }
 
 type AssetHandler interface {
@@ -25,6 +26,7 @@ func NewRouter(deps Dependencies) *gin.Engine {
 	r.Use(middleware.NewCORSMiddleware())
 
 	r.POST("/api/v1/releases", deps.AuthMiddleware, deps.ReleaseHandler.Upload)
+	r.GET("/api/v1/apps/:app/versions", deps.ReleaseHandler.ListVersions)
 	r.GET("/assets/:app/:version/*path", deps.AssetHandler.Get)
 	return r
 }

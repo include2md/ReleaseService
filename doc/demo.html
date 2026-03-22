@@ -125,6 +125,12 @@
       font-size: 13px;
       overflow: auto;
     }
+
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 16px 0;
+    }
   </style>
 </head>
 <body>
@@ -187,6 +193,22 @@
         <div id="fetchStatus" class="status"></div>
         <div id="fetchLog" class="log"></div>
         <div id="assetPreview" class="asset-preview">(asset preview)</div>
+
+        <div class="divider"></div>
+
+        <h2>List Versions</h2>
+        <div class="row">
+          <label for="versionsApp">app</label>
+          <input id="versionsApp" value="my-app" />
+        </div>
+        <div class="row">
+          <label for="versionsEnv">env</label>
+          <input id="versionsEnv" value="prod" />
+        </div>
+        <button id="listVersionsBtn" type="button">List Versions</button>
+        <div id="versionsStatus" class="status"></div>
+        <div id="versionsLog" class="log"></div>
+        <div id="versionsPreview" class="asset-preview">(versions preview)</div>
       </section>
     </div>
   </div>
@@ -290,6 +312,45 @@
         setStatus($('fetchStatus'), false, 'Fetch failed (network/CORS)');
         $('fetchLog').textContent = String(err);
         $('assetPreview').textContent = '(error)';
+      }
+    });
+
+    $('listVersionsBtn').addEventListener('click', async () => {
+      const baseUrl = $('baseUrl').value.trim();
+      const app = $('versionsApp').value.trim();
+      const env = $('versionsEnv').value.trim();
+      const url = `${baseUrl}/api/v1/apps/${encodeURIComponent(app)}/versions?environment=${encodeURIComponent(env)}`;
+
+      $('versionsLog').textContent = 'Sending request...';
+      setStatus($('versionsStatus'), true, 'Loading versions...');
+
+      try {
+        const res = await fetch(url);
+        const text = await res.text();
+        const json = safeJson(text);
+
+        $('versionsLog').textContent = JSON.stringify({
+          request: { url, method: 'GET' },
+          response: {
+            status: res.status,
+            body: json || text
+          }
+        }, null, 2);
+
+        if (!res.ok || !json || !Array.isArray(json.versions)) {
+          setStatus($('versionsStatus'), false, `List versions failed (${res.status})`);
+          $('versionsPreview').textContent = typeof text === 'string' ? text : '(error)';
+          return;
+        }
+
+        setStatus($('versionsStatus'), true, `Found ${json.versions.length} versions`);
+        $('versionsPreview').textContent = json.versions.length === 0
+          ? '(no versions)'
+          : json.versions.join('\n');
+      } catch (err) {
+        setStatus($('versionsStatus'), false, 'List versions failed (network/CORS)');
+        $('versionsLog').textContent = String(err);
+        $('versionsPreview').textContent = '(error)';
       }
     });
   </script>

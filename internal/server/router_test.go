@@ -13,7 +13,10 @@ type noopReleaseHandler struct{}
 type noopAssetHandler struct{}
 
 func (h noopReleaseHandler) Upload(c *gin.Context) { c.Status(http.StatusOK) }
-func (h noopAssetHandler) Get(c *gin.Context)      { c.Status(http.StatusOK) }
+func (h noopReleaseHandler) ListVersions(c *gin.Context) {
+	c.Status(http.StatusOK)
+}
+func (h noopAssetHandler) Get(c *gin.Context) { c.Status(http.StatusOK) }
 
 func TestRouter_RegistersRequiredRoutes(t *testing.T) {
 	gin.SetMode(gin.TestMode)
@@ -26,6 +29,7 @@ func TestRouter_RegistersRequiredRoutes(t *testing.T) {
 	routes := r.Routes()
 	want := map[string]bool{
 		http.MethodPost + " /api/v1/releases":           false,
+		http.MethodGet + " /api/v1/apps/:app/versions":  false,
 		http.MethodGet + " /assets/:app/:version/*path": false,
 	}
 

@@ -244,3 +244,24 @@ func TestReleaseService_DoesNotRotateWhenWithinLimit(t *testing.T) {
 		t.Fatalf("expected no status updates, got %d", len(repo.statusUpdates))
 	}
 }
+
+func TestReleaseService_ListAvailableVersions(t *testing.T) {
+	repo := &fakeReleaseRepo{
+		activeReleases: []domain.Release{
+			{AppName: "my-app", Environment: "prod", Version: "2.0.0"},
+			{AppName: "my-app", Environment: "prod", Version: "1.9.0"},
+		},
+	}
+	svc := NewReleaseService(repo, &fakeStorage{})
+
+	versions, err := svc.ListAvailableVersions(context.Background(), "my-app", "prod")
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if len(versions) != 2 {
+		t.Fatalf("expected 2 versions, got %d", len(versions))
+	}
+	if versions[0] != "2.0.0" || versions[1] != "1.9.0" {
+		t.Fatalf("unexpected versions: %#v", versions)
+	}
+}
