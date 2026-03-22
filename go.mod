@@ -1,4 +1,4 @@
-module releaseservice
+module app-assets-service
 
 go 1.23.0
 

@@ -9,7 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"releaseservice/internal/repository"
+	"app-assets-service/internal/repository"
 )
 
 type AssetRequest struct {

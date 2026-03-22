@@ -10,12 +10,12 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
-	"releaseservice/internal/config"
-	"releaseservice/internal/repository"
-	"releaseservice/internal/server"
-	"releaseservice/internal/server/handlers"
-	"releaseservice/internal/server/middleware"
-	"releaseservice/internal/service"
+	"app-assets-service/internal/config"
+	"app-assets-service/internal/repository"
+	"app-assets-service/internal/server"
+	"app-assets-service/internal/server/handlers"
+	"app-assets-service/internal/server/middleware"
+	"app-assets-service/internal/service"
 )
 
 func main() {
@@ -40,7 +40,7 @@ func main() {
 		log.Fatalf("init minio client: %v", err)
 	}
 
-	releaseRepo, err := repository.NewMongoReleaseRepository(mongoClient.Database(cfg.MongoDB).Collection("releases"))
+	releaseRepo, err := repository.NewMongoReleaseRepository(mongoClient.Database(cfg.MongoDB).Collection(cfg.MongoCollection))
 	if err != nil {
 		log.Fatalf("init release repo: %v", err)
 	}

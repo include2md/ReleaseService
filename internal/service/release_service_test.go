@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"releaseservice/internal/domain"
-	"releaseservice/internal/repository"
+	"app-assets-service/internal/domain"
+	"app-assets-service/internal/repository"
 )
 
 type fakeReleaseRepo struct {

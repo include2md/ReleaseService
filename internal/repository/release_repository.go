@@ -1,8 +1,8 @@
 package repository
 
 import (
+	"app-assets-service/internal/domain"
 	"context"
-	"releaseservice/internal/domain"
 )
 
 type ReleaseRepository interface {

@@ -5,12 +5,12 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /release-service ./cmd/server
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /app-asset-service ./cmd/server
 
 FROM alpine:3.22
 WORKDIR /app
 RUN adduser -D -g '' appuser
-COPY --from=build /release-service /app/release-service
+COPY --from=build /app-asset-service /app/app-asset-service
 USER appuser
 EXPOSE 8080
-ENTRYPOINT ["/app/release-service"]
+ENTRYPOINT ["/app/app-asset-service"]

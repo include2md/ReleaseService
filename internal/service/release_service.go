@@ -7,8 +7,8 @@ import (
 	"path"
 	"time"
 
-	"releaseservice/internal/domain"
-	"releaseservice/internal/repository"
+	"app-assets-service/internal/domain"
+	"app-assets-service/internal/repository"
 )
 
 var ErrReleaseAlreadyExists = errors.New("release already exists")

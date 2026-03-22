@@ -13,7 +13,7 @@ make up
 ```
 
 預設會啟動：
-- Release Service: `http://localhost:8080`
+- App Asset Service: `http://localhost:8080`
 - MongoDB: `localhost:27017`
 - MinIO API: `http://localhost:9000`
 - MinIO Console: `http://localhost:9001`

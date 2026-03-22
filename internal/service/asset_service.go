@@ -5,7 +5,7 @@ import (
 	"io"
 	"path"
 
-	"releaseservice/internal/repository"
+	"app-assets-service/internal/repository"
 )
 
 type AssetRequest struct {

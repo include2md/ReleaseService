@@ -1,8 +1,8 @@
 package server
 
 import (
+	"app-assets-service/internal/server/middleware"
 	"github.com/gin-gonic/gin"
-	"releaseservice/internal/server/middleware"
 )
 
 type ReleaseHandler interface {

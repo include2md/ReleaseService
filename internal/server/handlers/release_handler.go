@@ -8,8 +8,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"releaseservice/internal/archive"
-	"releaseservice/internal/service"
+	"app-assets-service/internal/archive"
+	"app-assets-service/internal/service"
 )
 
 var ErrReleaseAlreadyExists = service.ErrReleaseAlreadyExists

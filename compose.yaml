@@ -1,10 +1,10 @@
 services:
   mongodb:
     image: mongo:7
-    container_name: release-mongodb
+    container_name: app-asset-mongodb
     restart: unless-stopped
     environment:
-      MONGO_INITDB_DATABASE: release_service
+      MONGO_INITDB_DATABASE: app_asset_service
     ports:
       - "27017:27017"
     healthcheck:
@@ -15,7 +15,7 @@ services:
 
   minio:
     image: minio/minio:latest
-    container_name: release-minio
+    container_name: app-asset-minio
     restart: unless-stopped
     command: server /data --console-address ":9001"
     environment:
@@ -32,7 +32,7 @@ services:
 
   minio-init:
     image: minio/mc:latest
-    container_name: release-minio-init
+    container_name: app-asset-minio-init
     depends_on:
       minio:
         condition: service_healthy
@@ -42,11 +42,11 @@ services:
       mc mb --ignore-existing local/frontend-assets;
       "
 
-  release-service:
+  app-asset-service:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: release-service
+    container_name: app-asset-service
     restart: unless-stopped
     depends_on:
       mongodb:
@@ -56,7 +56,8 @@ services:
     environment:
       ADDR: :8080
       MONGO_URI: mongodb://mongodb:27017
-      MONGO_DB: release_service
+      MONGO_DB: app_asset_service
+      MONGO_COLLECTION: app_asset_releases
       MINIO_ENDPOINT: minio:9000
       MINIO_ACCESS_KEY: minioadmin
       MINIO_SECRET_KEY: minioadmin

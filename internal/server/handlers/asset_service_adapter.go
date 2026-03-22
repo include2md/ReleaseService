@@ -3,7 +3,7 @@ package handlers
 import (
 	"context"
 
-	"releaseservice/internal/service"
+	"app-assets-service/internal/service"
 )
 
 type AssetGetter interface {

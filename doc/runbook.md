@@ -7,7 +7,7 @@ docker compose up --build
 ```
 
 Services:
-- Release Service: `http://localhost:8080`
+- App Asset Service: `http://localhost:8080`
 - MongoDB: `mongodb://localhost:27017`
 - MinIO API: `http://localhost:9000`
 - MinIO Console: `http://localhost:9001` (`minioadmin/minioadmin`)
@@ -15,6 +15,7 @@ Services:
 ## Required runtime env vars
 - `MONGO_URI`
 - `MONGO_DB`
+- `MONGO_COLLECTION`
 - `MINIO_ENDPOINT`
 - `MINIO_ACCESS_KEY`
 - `MINIO_SECRET_KEY`

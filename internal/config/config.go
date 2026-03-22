@@ -7,28 +7,30 @@ import (
 )
 
 type Config struct {
-	Addr           string
-	MongoURI       string
-	MongoDB        string
-	MinioEndpoint  string
-	MinioAccessKey string
-	MinioSecretKey string
-	MinioBucket    string
-	MinioUseSSL    bool
-	ReleaseTokens  []string
+	Addr            string
+	MongoURI        string
+	MongoDB         string
+	MongoCollection string
+	MinioEndpoint   string
+	MinioAccessKey  string
+	MinioSecretKey  string
+	MinioBucket     string
+	MinioUseSSL     bool
+	ReleaseTokens   []string
 }
 
 func Load() (Config, error) {
 	cfg := Config{
-		Addr:           envOrDefault("ADDR", ":8080"),
-		MongoURI:       os.Getenv("MONGO_URI"),
-		MongoDB:        envOrDefault("MONGO_DB", "release_service"),
-		MinioEndpoint:  os.Getenv("MINIO_ENDPOINT"),
-		MinioAccessKey: os.Getenv("MINIO_ACCESS_KEY"),
-		MinioSecretKey: os.Getenv("MINIO_SECRET_KEY"),
-		MinioBucket:    os.Getenv("MINIO_BUCKET"),
-		MinioUseSSL:    strings.EqualFold(os.Getenv("MINIO_USE_SSL"), "true"),
-		ReleaseTokens:  splitCSV(os.Getenv("RELEASE_TOKENS")),
+		Addr:            envOrDefault("ADDR", ":8080"),
+		MongoURI:        os.Getenv("MONGO_URI"),
+		MongoDB:         envOrDefault("MONGO_DB", "app_asset_service"),
+		MongoCollection: envOrDefault("MONGO_COLLECTION", "app_asset_releases"),
+		MinioEndpoint:   os.Getenv("MINIO_ENDPOINT"),
+		MinioAccessKey:  os.Getenv("MINIO_ACCESS_KEY"),
+		MinioSecretKey:  os.Getenv("MINIO_SECRET_KEY"),
+		MinioBucket:     os.Getenv("MINIO_BUCKET"),
+		MinioUseSSL:     strings.EqualFold(os.Getenv("MINIO_USE_SSL"), "true"),
+		ReleaseTokens:   splitCSV(os.Getenv("RELEASE_TOKENS")),
 	}
 
 	if cfg.MongoURI == "" {

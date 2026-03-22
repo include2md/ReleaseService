@@ -9,7 +9,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"releaseservice/internal/service"
+	"app-assets-service/internal/service"
 )
 
 type fakeReleaseService struct {
