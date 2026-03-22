@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"path"
+	"sort"
+	"strings"
 	"time"
 
 	"app-assets-service/internal/domain"
@@ -12,6 +14,12 @@ import (
 )
 
 var ErrReleaseAlreadyExists = errors.New("release already exists")
+
+const (
+	releaseStatusSuccess        = "success"
+	releaseStatusRotatedDeleted = "rotated_deleted"
+	maxActiveVersionsPerAppEnv  = 15
+)
 
 type ExtractedFile struct {
 	RelativePath string
@@ -60,7 +68,7 @@ func (s *ReleaseService) CreateRelease(ctx context.Context, in ReleaseInput) err
 		AppName:       in.AppName,
 		Version:       in.Version,
 		Environment:   in.Environment,
-		Status:        "success",
+		Status:        releaseStatusSuccess,
 		StoragePrefix: "/" + prefix + "/",
 		CommitSHA:     in.CommitSHA,
 		BuildID:       in.BuildID,
@@ -71,9 +79,41 @@ func (s *ReleaseService) CreateRelease(ctx context.Context, in ReleaseInput) err
 		return err
 	}
 
+	if err := s.rotateOldReleases(ctx, in.AppName, in.Environment); err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func buildPrefix(environment, app, version string) string {
 	return path.Join(environment, app, version)
+}
+
+func (s *ReleaseService) rotateOldReleases(ctx context.Context, appName, environment string) error {
+	activeReleases, err := s.repo.ListActiveByAppEnvironment(ctx, appName, environment)
+	if err != nil {
+		return err
+	}
+	if len(activeReleases) <= maxActiveVersionsPerAppEnv {
+		return nil
+	}
+
+	sort.Slice(activeReleases, func(i, j int) bool {
+		return activeReleases[i].CreatedAt.After(activeReleases[j].CreatedAt)
+	})
+
+	for _, stale := range activeReleases[maxActiveVersionsPerAppEnv:] {
+		prefix := strings.Trim(stale.StoragePrefix, "/")
+		if prefix == "" {
+			prefix = buildPrefix(stale.Environment, stale.AppName, stale.Version)
+		}
+		if err := s.storage.DeletePrefix(ctx, prefix); err != nil {
+			return fmt.Errorf("rotate delete prefix %s: %w", prefix, err)
+		}
+		if err := s.repo.UpdateStatus(ctx, stale.AppName, stale.Environment, stale.Version, releaseStatusRotatedDeleted); err != nil {
+			return err
+		}
+	}
+	return nil
 }
