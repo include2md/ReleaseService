@@ -26,14 +26,14 @@ Services:
 ## Quick upload test
 
 ```bash
-zip -r sample.zip index.html assets
+tar -czf sample.tar.gz index.html assets
 
 curl -X POST 'http://localhost:8080/api/v1/releases' \
   -H 'Authorization: Bearer local-dev-token' \
   -F 'app_name=my-app' \
   -F 'version=1.2.3' \
   -F 'environment=prod' \
-  -F 'artifact=@sample.zip'
+  -F 'artifact=@sample.tar.gz'
 ```
 
 ## Quick asset read test

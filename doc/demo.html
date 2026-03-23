@@ -162,8 +162,8 @@
           <input id="environment" value="prod" />
         </div>
         <div class="row">
-          <label for="artifact">artifact (.zip)</label>
-          <input id="artifact" type="file" accept=".zip,application/zip" />
+          <label for="artifact">artifact (.tar.gz)</label>
+          <input id="artifact" type="file" accept=".tar.gz,application/gzip,application/x-gzip" />
         </div>
         <button id="uploadBtn" type="button">Upload Release</button>
         <div id="uploadStatus" class="status"></div>
@@ -234,7 +234,7 @@
       const file = $('artifact').files[0];
 
       if (!file) {
-        setStatus($('uploadStatus'), false, '請先選擇 zip 檔');
+        setStatus($('uploadStatus'), false, '請先選擇 tar.gz 檔');
         return;
       }
 

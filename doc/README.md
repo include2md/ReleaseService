@@ -39,7 +39,7 @@ python -m http.server 5500
 - app_name: 例如 `my-app`
 - version: 例如 `1.2.3`
 - environment: 例如 `prod`
-- artifact: 選擇 `.zip` 檔案
+- artifact: 選擇 `.tar.gz` 檔案
 
 按下 `Upload Release`。
 
@@ -74,4 +74,4 @@ python -m http.server 5500
 
 
 
-zip -r ../ttt.zip index.html
+tar -czf ../ttt.tar.gz index.html

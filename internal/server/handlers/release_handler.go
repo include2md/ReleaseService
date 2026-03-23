@@ -48,14 +48,14 @@ func (h *ReleaseHandler) Upload(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid artifact"})
 		return
 	}
-	if !archive.IsZip(artifactBytes) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "artifact must be zip"})
+	if !archive.IsTarGz(artifactBytes) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "artifact must be tar.gz"})
 		return
 	}
 
-	dir, entries, err := archive.ExtractZipBytes(artifactBytes)
+	dir, entries, err := archive.ExtractTarGzBytes(artifactBytes)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid zip"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid tar.gz"})
 		return
 	}
 	defer os.RemoveAll(dir)

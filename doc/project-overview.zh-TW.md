@@ -4,7 +4,7 @@
 
 `App Asset Service` 是一個專門服務前端靜態資產發版與讀取的後端服務，核心目標如下：
 
-- 讓 CI 可以上傳前端打包檔（zip）並建立不可變版本。
+- 讓 CI 可以上傳前端打包檔（tar.gz）並建立不可變版本。
 - 將版本資產儲存到 MinIO，並以 `environment/app/version` 作為儲存路徑。
 - 提供資產讀取 API 給 CDN / 前端。
 - 控制每個 `app + environment` 僅保留最多 15 個可用版本（`success`）；超過則自動 rotation。
@@ -17,7 +17,7 @@
 ### 2.1 Upload 流程（寫入）
 
 1. Client/CI 呼叫 `POST /api/v1/releases`（需 Bearer Token）。
-2. Handler 驗證必要欄位與 artifact（必須是 zip）。
+2. Handler 驗證必要欄位與 artifact（必須是 tar.gz）。
 3. 服務層解壓後逐檔上傳到 MinIO：`/{environment}/{app}/{version}/{file}`。
 4. 寫入 MongoDB release 文件，狀態為 `success`。
 5. 執行 rotation：
@@ -55,7 +55,7 @@ Request fields:
 - `app_name` (required)
 - `version` (required)
 - `environment` (required)
-- `artifact` (required, zip)
+- `artifact` (required, tar.gz)
 - `commit_sha` (optional)
 - `build_id` (optional)
 
@@ -72,7 +72,7 @@ Success response (`200`):
 ```
 
 Common errors:
-- `400` 缺欄位 / 非 zip / 壞檔案
+- `400` 缺欄位 / 非 tar.gz / 壞檔案
 - `401` token 驗證失敗
 - `409` 同 `app_name + environment + version` 已存在
 - `500` 伺服器處理失敗
@@ -154,7 +154,7 @@ Index:
 - rotation 失敗補償機制（例如重試佇列、背景 job）。
 - 新增審計欄位（`rotated_at`, `rotated_by`, `delete_reason`）。
 - 建立管理 API：手動下架、回滾、重新標記 status。
-- 支援 tar.gz 與 artifact checksum 驗證。
+- 支援 artifact checksum 驗證與簽章檢查。
 - 強化安全性：token 管理、細粒度權限、審計 log。
 - 增加可觀測性：Prometheus metrics、trace、結構化 logging。
 - 增加更多整合測試（Mongo + MinIO + router e2e）。

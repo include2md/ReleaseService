@@ -1,8 +1,9 @@
 package handlers
 
 import (
-	"archive/zip"
+	"archive/tar"
 	"bytes"
+	"compress/gzip"
 	"context"
 	"encoding/json"
 	"mime/multipart"
@@ -29,7 +30,7 @@ func (f fakeReleaseService) ListAvailableVersions(ctx context.Context, appName, 
 	return f.versions, nil
 }
 
-func TestReleaseHandler_ReturnsBadRequestForNonZipArtifact(t *testing.T) {
+func TestReleaseHandler_ReturnsBadRequestForNonTarGzArtifact(t *testing.T) {
 	h := NewReleaseHandler(fakeReleaseService{})
 	r := setupReleaseTestRouter(h)
 
@@ -39,7 +40,7 @@ func TestReleaseHandler_ReturnsBadRequestForNonZipArtifact(t *testing.T) {
 	_ = w.WriteField("version", "1.2.3")
 	_ = w.WriteField("environment", "prod")
 	part, _ := w.CreateFormFile("artifact", "artifact.txt")
-	_, _ = part.Write([]byte("not-zip"))
+	_, _ = part.Write([]byte("not-tar-gz"))
 	_ = w.Close()
 
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/releases", body)
@@ -62,8 +63,8 @@ func TestReleaseHandler_ReturnsConflictWhenServiceSaysDuplicate(t *testing.T) {
 	_ = w.WriteField("app_name", "my-app")
 	_ = w.WriteField("version", "1.2.3")
 	_ = w.WriteField("environment", "prod")
-	part, _ := w.CreateFormFile("artifact", "artifact.zip")
-	_, _ = part.Write(validZipBytes(t))
+	part, _ := w.CreateFormFile("artifact", "artifact.tar.gz")
+	_, _ = part.Write(validTarGzBytes(t))
 	_ = w.Close()
 
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/releases", body)
@@ -121,17 +122,27 @@ func TestReleaseHandler_ListVersions_ReturnsVersions(t *testing.T) {
 	}
 }
 
-func validZipBytes(t *testing.T) []byte {
+func validTarGzBytes(t *testing.T) []byte {
 	t.Helper()
 	var buf bytes.Buffer
-	zw := zip.NewWriter(&buf)
-	f, err := zw.Create("index.html")
-	if err != nil {
-		t.Fatalf("create zip entry: %v", err)
+	gzw := gzip.NewWriter(&buf)
+	tw := tar.NewWriter(gzw)
+	content := []byte("ok")
+	if err := tw.WriteHeader(&tar.Header{
+		Name: "index.html",
+		Mode: 0o644,
+		Size: int64(len(content)),
+	}); err != nil {
+		t.Fatalf("write tar header: %v", err)
 	}
-	_, _ = f.Write([]byte("ok"))
-	if err := zw.Close(); err != nil {
-		t.Fatalf("close zip: %v", err)
+	if _, err := tw.Write(content); err != nil {
+		t.Fatalf("write tar content: %v", err)
+	}
+	if err := tw.Close(); err != nil {
+		t.Fatalf("close tar writer: %v", err)
+	}
+	if err := gzw.Close(); err != nil {
+		t.Fatalf("close gzip writer: %v", err)
 	}
 	return buf.Bytes()
 }

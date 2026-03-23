@@ -4,7 +4,7 @@
 
 `App Asset Service` is a backend service focused on frontend static asset release and delivery. Its core goals are:
 
-- Allow CI to upload frontend artifacts (zip) and create immutable versions.
+- Allow CI to upload frontend artifacts (tar.gz) and create immutable versions.
 - Store versioned assets in MinIO using `environment/app/version` paths.
 - Provide asset read APIs for CDN / frontend clients.
 - Keep at most 15 active versions (`success`) per `app + environment`.
@@ -17,7 +17,7 @@
 ### 2.1 Upload Flow (Write Path)
 
 1. Client/CI calls `POST /api/v1/releases` (Bearer token required).
-2. Handler validates required fields and artifact format (zip only).
+2. Handler validates required fields and artifact format (tar.gz only).
 3. Service extracts files and uploads each file to MinIO under `/{environment}/{app}/{version}/{file}`.
 4. Service inserts a release document into MongoDB with `status = success`.
 5. Service performs rotation:
@@ -55,7 +55,7 @@ Request fields:
 - `app_name` (required)
 - `version` (required)
 - `environment` (required)
-- `artifact` (required, zip)
+- `artifact` (required, tar.gz)
 - `commit_sha` (optional)
 - `build_id` (optional)
 
@@ -72,7 +72,7 @@ Success response (`200`):
 ```
 
 Common errors:
-- `400` missing fields / non-zip / invalid artifact
+- `400` missing fields / non-tar.gz / invalid artifact
 - `401` invalid token
 - `409` duplicate `(app_name, environment, version)`
 - `500` internal error
@@ -154,7 +154,7 @@ Index:
 - Add robust rotation compensation (retry queue/background jobs).
 - Add audit fields (`rotated_at`, `rotated_by`, `delete_reason`).
 - Add admin operations (manual deprecate/rollback/recover).
-- Support more artifact formats (e.g., tar.gz) and checksum validation.
+- Add artifact checksum/signature verification.
 - Strengthen security (token lifecycle, scoped permissions, audit logs).
 - Improve observability (Prometheus metrics, tracing, structured logs).
 - Add more integration/e2e tests (Mongo + MinIO + router).

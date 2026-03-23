@@ -5,7 +5,7 @@
 This service is responsible for:
 
 ### Write Path (CI → Service)
-- Upload frontend static assets (zip/tar.gz)
+- Upload frontend static assets (tar.gz)
 - Extract and store in MinIO
 - Record metadata in DB
 - Handle versioning and rotation

@@ -4,7 +4,7 @@ TOKEN ?= local-dev-token
 APP ?= my-app
 VERSION ?= 1.2.3
 ENV ?= prod
-ZIP ?= sample.zip
+ARTIFACT ?= sample.tar.gz
 
 .PHONY: up down logs ps test test-upload
 
@@ -24,10 +24,10 @@ test:
 	go test ./...
 
 test-upload:
-	@test -f "$(ZIP)" || (echo "zip file not found: $(ZIP)" && exit 1)
+	@test -f "$(ARTIFACT)" || (echo "artifact file not found: $(ARTIFACT)" && exit 1)
 	curl -X POST '$(API)/api/v1/releases' \
 		-H 'Authorization: Bearer $(TOKEN)' \
 		-F 'app_name=$(APP)' \
 		-F 'version=$(VERSION)' \
 		-F 'environment=$(ENV)' \
-		-F 'artifact=@$(ZIP)'
+		-F 'artifact=@$(ARTIFACT)'
