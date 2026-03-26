@@ -16,7 +16,7 @@ var ErrReleaseAlreadyExists = service.ErrReleaseAlreadyExists
 
 type ReleaseService interface {
 	CreateRelease(ctx context.Context, in service.ReleaseInput) error
-	ListAvailableVersions(ctx context.Context, appName, environment string) ([]string, error)
+	ListAvailableVersions(ctx context.Context, appName string) ([]string, error)
 }
 
 type ReleaseHandler struct {
@@ -30,8 +30,7 @@ func NewReleaseHandler(svc ReleaseService) *ReleaseHandler {
 func (h *ReleaseHandler) Upload(c *gin.Context) {
 	app := c.PostForm("app_name")
 	version := c.PostForm("version")
-	env := c.PostForm("environment")
-	if app == "" || version == "" || env == "" {
+	if app == "" || version == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "missing required fields"})
 		return
 	}
@@ -72,7 +71,6 @@ func (h *ReleaseHandler) Upload(c *gin.Context) {
 	err = h.svc.CreateRelease(c.Request.Context(), service.ReleaseInput{
 		AppName:      app,
 		Version:      version,
-		Environment:  env,
 		CommitSHA:    c.PostForm("commit_sha"),
 		BuildID:      c.PostForm("build_id"),
 		ExtractedDir: dir,
@@ -88,32 +86,29 @@ func (h *ReleaseHandler) Upload(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"success":     true,
-		"app_name":    app,
-		"version":     version,
-		"environment": env,
-		"status":      "success",
+		"success":  true,
+		"app_name": app,
+		"version":  version,
+		"status":   "success",
 	})
 }
 
 func (h *ReleaseHandler) ListVersions(c *gin.Context) {
 	app := c.Param("app")
-	environment := c.Query("environment")
-	if app == "" || environment == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "app and environment are required"})
+	if app == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "app is required"})
 		return
 	}
 
-	versions, err := h.svc.ListAvailableVersions(c.Request.Context(), app, environment)
+	versions, err := h.svc.ListAvailableVersions(c.Request.Context(), app)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to list versions"})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"success":     true,
-		"app_name":    app,
-		"environment": environment,
-		"versions":    versions,
+		"success":  true,
+		"app_name": app,
+		"versions": versions,
 	})
 }

@@ -3,7 +3,6 @@ API ?= http://localhost:8080
 TOKEN ?= local-dev-token
 APP ?= my-app
 VERSION ?= 1.2.3
-ENV ?= prod
 ARTIFACT ?= sample.tar.gz
 
 .PHONY: up down logs ps test test-upload
@@ -29,5 +28,4 @@ test-upload:
 		-H 'Authorization: Bearer $(TOKEN)' \
 		-F 'app_name=$(APP)' \
 		-F 'version=$(VERSION)' \
-		-F 'environment=$(ENV)' \
 		-F 'artifact=@$(ARTIFACT)'

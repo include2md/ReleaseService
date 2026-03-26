@@ -40,7 +40,6 @@ Upload a new frontend version.
 Request (multipart/form-data):
 - app_name
 - version
-- environment
 - artifact
 - commit_sha (optional)
 - build_id (optional)
@@ -50,7 +49,6 @@ Response:
   "success": true,
   "app_name": "my-app",
   "version": "1.2.3",
-  "environment": "prod",
   "status": "success"
 }
 
@@ -68,7 +66,7 @@ Example:
 
 ## 5. MinIO Structure
 
-/{environment}/{app}/{version}/{file}
+/{app}/{version}/{file}
 
 ---
 
@@ -78,12 +76,11 @@ releases:
 - id
 - app_name
 - version
-- environment
 - status
 - storage_prefix
 - created_at
 
-UNIQUE(app_name, version, environment)
+UNIQUE(app_name, version)
 
 ---
 

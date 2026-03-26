@@ -13,10 +13,9 @@ import (
 )
 
 type AssetRequest struct {
-	Environment string
-	App         string
-	Version     string
-	Path        string
+	App     string
+	Version string
+	Path    string
 }
 
 type AssetResponse struct {
@@ -37,22 +36,15 @@ func NewAssetHandler(svc AssetService) *AssetHandler {
 }
 
 func (h *AssetHandler) Get(c *gin.Context) {
-	env := c.Query("env")
-	if env == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "env is required"})
-		return
-	}
-
 	assetPath := strings.TrimPrefix(c.Param("path"), "/")
 	if assetPath == "" {
 		assetPath = "index.html"
 	}
 
 	res, err := h.svc.GetAsset(c.Request.Context(), AssetRequest{
-		Environment: env,
-		App:         c.Param("app"),
-		Version:     c.Param("version"),
-		Path:        assetPath,
+		App:     c.Param("app"),
+		Version: c.Param("version"),
+		Path:    assetPath,
 	})
 	if err != nil {
 		if errors.Is(err, repository.ErrObjectNotFound) {

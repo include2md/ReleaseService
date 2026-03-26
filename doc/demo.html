@@ -158,10 +158,6 @@
           <input id="version" value="1.2.3" />
         </div>
         <div class="row">
-          <label for="environment">environment</label>
-          <input id="environment" value="prod" />
-        </div>
-        <div class="row">
           <label for="artifact">artifact (.tar.gz)</label>
           <input id="artifact" type="file" accept=".tar.gz,application/gzip,application/x-gzip" />
         </div>
@@ -181,10 +177,6 @@
           <input id="assetVersion" value="1.2.3" />
         </div>
         <div class="row">
-          <label for="assetEnv">env</label>
-          <input id="assetEnv" value="prod" />
-        </div>
-        <div class="row">
           <label for="assetPath">path</label>
           <input id="assetPath" value="index.html" />
         </div>
@@ -200,10 +192,6 @@
         <div class="row">
           <label for="versionsApp">app</label>
           <input id="versionsApp" value="my-app" />
-        </div>
-        <div class="row">
-          <label for="versionsEnv">env</label>
-          <input id="versionsEnv" value="prod" />
         </div>
         <button id="listVersionsBtn" type="button">List Versions</button>
         <div id="versionsStatus" class="status"></div>
@@ -230,7 +218,6 @@
       const token = $('token').value.trim();
       const appName = $('appName').value.trim();
       const version = $('version').value.trim();
-      const environment = $('environment').value.trim();
       const file = $('artifact').files[0];
 
       if (!file) {
@@ -241,7 +228,6 @@
       const fd = new FormData();
       fd.append('app_name', appName);
       fd.append('version', version);
-      fd.append('environment', environment);
       fd.append('artifact', file);
 
       $('uploadLog').textContent = 'Sending request...';
@@ -262,7 +248,6 @@
             method: 'POST',
             app_name: appName,
             version,
-            environment,
             artifact: file.name
           },
           response: {
@@ -282,10 +267,9 @@
       const baseUrl = $('baseUrl').value.trim();
       const app = $('assetApp').value.trim();
       const version = $('assetVersion').value.trim();
-      const env = $('assetEnv').value.trim();
       const path = $('assetPath').value.trim().replace(/^\//, '');
 
-      const url = `${baseUrl}/assets/${encodeURIComponent(app)}/${encodeURIComponent(version)}/${path}?env=${encodeURIComponent(env)}`;
+      const url = `${baseUrl}/assets/${encodeURIComponent(app)}/${encodeURIComponent(version)}/${path}`;
       $('fetchLog').textContent = 'Sending request...';
       setStatus($('fetchStatus'), true, 'Fetching...');
 
@@ -318,8 +302,7 @@
     $('listVersionsBtn').addEventListener('click', async () => {
       const baseUrl = $('baseUrl').value.trim();
       const app = $('versionsApp').value.trim();
-      const env = $('versionsEnv').value.trim();
-      const url = `${baseUrl}/api/v1/apps/${encodeURIComponent(app)}/versions?environment=${encodeURIComponent(env)}`;
+      const url = `${baseUrl}/api/v1/apps/${encodeURIComponent(app)}/versions`;
 
       $('versionsLog').textContent = 'Sending request...';
       setStatus($('versionsStatus'), true, 'Loading versions...');

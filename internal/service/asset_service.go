@@ -9,10 +9,9 @@ import (
 )
 
 type AssetRequest struct {
-	Environment string
-	App         string
-	Version     string
-	AssetPath   string
+	App       string
+	Version   string
+	AssetPath string
 }
 
 type AssetResult struct {
@@ -29,7 +28,7 @@ func NewAssetService(storage repository.ObjectStorage) *AssetService {
 }
 
 func (s *AssetService) GetAsset(ctx context.Context, req AssetRequest) (*AssetResult, error) {
-	key := path.Join(req.Environment, req.App, req.Version, req.AssetPath)
+	key := path.Join(req.App, req.Version, req.AssetPath)
 	obj, err := s.storage.GetObject(ctx, key)
 	if err != nil {
 		return nil, err

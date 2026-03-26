@@ -30,7 +30,6 @@ type ExtractedFile struct {
 type ReleaseInput struct {
 	AppName      string
 	Version      string
-	Environment  string
 	CommitSHA    string
 	BuildID      string
 	ExtractedDir string
@@ -47,7 +46,7 @@ func NewReleaseService(repo repository.ReleaseRepository, storage repository.Obj
 }
 
 func (s *ReleaseService) CreateRelease(ctx context.Context, in ReleaseInput) error {
-	exists, err := s.repo.Exists(ctx, in.AppName, in.Environment, in.Version)
+	exists, err := s.repo.Exists(ctx, in.AppName, in.Version)
 	if err != nil {
 		return err
 	}
@@ -55,7 +54,7 @@ func (s *ReleaseService) CreateRelease(ctx context.Context, in ReleaseInput) err
 		return ErrReleaseAlreadyExists
 	}
 
-	prefix := buildPrefix(in.Environment, in.AppName, in.Version)
+	prefix := buildPrefix(in.AppName, in.Version)
 	for _, file := range in.Files {
 		key := path.Join(prefix, file.RelativePath)
 		if err := s.storage.UploadFile(ctx, key, file.FullPath, file.ContentType); err != nil {
@@ -67,7 +66,6 @@ func (s *ReleaseService) CreateRelease(ctx context.Context, in ReleaseInput) err
 	release := domain.Release{
 		AppName:       in.AppName,
 		Version:       in.Version,
-		Environment:   in.Environment,
 		Status:        releaseStatusSuccess,
 		StoragePrefix: "/" + prefix + "/",
 		CommitSHA:     in.CommitSHA,
@@ -79,19 +77,19 @@ func (s *ReleaseService) CreateRelease(ctx context.Context, in ReleaseInput) err
 		return err
 	}
 
-	if err := s.rotateOldReleases(ctx, in.AppName, in.Environment); err != nil {
+	if err := s.rotateOldReleases(ctx, in.AppName); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func buildPrefix(environment, app, version string) string {
-	return path.Join(environment, app, version)
+func buildPrefix(app, version string) string {
+	return path.Join(app, version)
 }
 
-func (s *ReleaseService) ListAvailableVersions(ctx context.Context, appName, environment string) ([]string, error) {
-	releases, err := s.repo.ListActiveByAppEnvironment(ctx, appName, environment)
+func (s *ReleaseService) ListAvailableVersions(ctx context.Context, appName string) ([]string, error) {
+	releases, err := s.repo.ListActiveByApp(ctx, appName)
 	if err != nil {
 		return nil, err
 	}
@@ -102,8 +100,8 @@ func (s *ReleaseService) ListAvailableVersions(ctx context.Context, appName, env
 	return versions, nil
 }
 
-func (s *ReleaseService) rotateOldReleases(ctx context.Context, appName, environment string) error {
-	activeReleases, err := s.repo.ListActiveByAppEnvironment(ctx, appName, environment)
+func (s *ReleaseService) rotateOldReleases(ctx context.Context, appName string) error {
+	activeReleases, err := s.repo.ListActiveByApp(ctx, appName)
 	if err != nil {
 		return err
 	}
@@ -118,12 +116,12 @@ func (s *ReleaseService) rotateOldReleases(ctx context.Context, appName, environ
 	for _, stale := range activeReleases[maxActiveVersionsPerAppEnv:] {
 		prefix := strings.Trim(stale.StoragePrefix, "/")
 		if prefix == "" {
-			prefix = buildPrefix(stale.Environment, stale.AppName, stale.Version)
+			prefix = buildPrefix(stale.AppName, stale.Version)
 		}
 		if err := s.storage.DeletePrefix(ctx, prefix); err != nil {
 			return fmt.Errorf("rotate delete prefix %s: %w", prefix, err)
 		}
-		if err := s.repo.UpdateStatus(ctx, stale.AppName, stale.Environment, stale.Version, releaseStatusRotatedDeleted); err != nil {
+		if err := s.repo.UpdateStatus(ctx, stale.AppName, stale.Version, releaseStatusRotatedDeleted); err != nil {
 			return err
 		}
 	}

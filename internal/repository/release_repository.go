@@ -6,8 +6,8 @@ import (
 )
 
 type ReleaseRepository interface {
-	Exists(ctx context.Context, appName, environment, version string) (bool, error)
+	Exists(ctx context.Context, appName, version string) (bool, error)
 	Insert(ctx context.Context, release domain.Release) error
-	ListActiveByAppEnvironment(ctx context.Context, appName, environment string) ([]domain.Release, error)
-	UpdateStatus(ctx context.Context, appName, environment, version, status string) error
+	ListActiveByApp(ctx context.Context, appName string) ([]domain.Release, error)
+	UpdateStatus(ctx context.Context, appName, version, status string) error
 }

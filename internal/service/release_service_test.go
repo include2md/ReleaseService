@@ -24,13 +24,12 @@ type fakeReleaseRepo struct {
 }
 
 type statusUpdate struct {
-	appName     string
-	environment string
-	version     string
-	status      string
+	appName string
+	version string
+	status  string
 }
 
-func (f *fakeReleaseRepo) Exists(ctx context.Context, appName, environment, version string) (bool, error) {
+func (f *fakeReleaseRepo) Exists(ctx context.Context, appName, version string) (bool, error) {
 	return f.exists, nil
 }
 
@@ -43,31 +42,30 @@ func (f *fakeReleaseRepo) Insert(ctx context.Context, release domain.Release) er
 	return nil
 }
 
-func (f *fakeReleaseRepo) ListActiveByAppEnvironment(ctx context.Context, appName, environment string) ([]domain.Release, error) {
+func (f *fakeReleaseRepo) ListActiveByApp(ctx context.Context, appName string) ([]domain.Release, error) {
 	if f.listErr != nil {
 		return nil, f.listErr
 	}
 	out := make([]domain.Release, 0, len(f.activeReleases))
 	for _, r := range f.activeReleases {
-		if r.AppName == appName && r.Environment == environment {
+		if r.AppName == appName {
 			out = append(out, r)
 		}
 	}
 	return out, nil
 }
 
-func (f *fakeReleaseRepo) UpdateStatus(ctx context.Context, appName, environment, version, status string) error {
+func (f *fakeReleaseRepo) UpdateStatus(ctx context.Context, appName, version, status string) error {
 	if f.updateErr != nil {
 		return f.updateErr
 	}
 	f.statusUpdates = append(f.statusUpdates, statusUpdate{
-		appName:     appName,
-		environment: environment,
-		version:     version,
-		status:      status,
+		appName: appName,
+		version: version,
+		status:  status,
 	})
 	for i, r := range f.activeReleases {
-		if r.AppName == appName && r.Environment == environment && r.Version == version {
+		if r.AppName == appName && r.Version == version {
 			f.activeReleases[i].Status = status
 		}
 	}
@@ -109,9 +107,8 @@ func TestReleaseService_CreateRelease_ReturnsConflictWhenVersionExists(t *testin
 	svc := NewReleaseService(repo, storage)
 
 	err := svc.CreateRelease(context.Background(), ReleaseInput{
-		AppName:     "my-app",
-		Environment: "prod",
-		Version:     "1.2.3",
+		AppName: "my-app",
+		Version: "1.2.3",
 	})
 
 	if !errors.Is(err, ErrReleaseAlreadyExists) {
@@ -132,7 +129,6 @@ func TestReleaseService_CleansUpUploadedObjectsWhenMongoInsertFails(t *testing.T
 
 	err := svc.CreateRelease(context.Background(), ReleaseInput{
 		AppName:      "my-app",
-		Environment:  "prod",
 		Version:      "1.2.3",
 		ExtractedDir: tmpDir,
 		Files: []ExtractedFile{
@@ -155,10 +151,9 @@ func TestReleaseService_RotatesOldReleasesOverLimit(t *testing.T) {
 		version := fmt.Sprintf("1.0.%d", i)
 		existing = append(existing, domain.Release{
 			AppName:       "my-app",
-			Environment:   "prod",
 			Version:       version,
 			Status:        "success",
-			StoragePrefix: "/prod/my-app/" + version + "/",
+			StoragePrefix: "/my-app/" + version + "/",
 			CreatedAt:     now.Add(time.Duration(-16+i) * time.Minute),
 		})
 	}
@@ -175,7 +170,6 @@ func TestReleaseService_RotatesOldReleasesOverLimit(t *testing.T) {
 
 	err := svc.CreateRelease(context.Background(), ReleaseInput{
 		AppName:      "my-app",
-		Environment:  "prod",
 		Version:      "2.0.0",
 		ExtractedDir: tmpDir,
 		Files: []ExtractedFile{
@@ -189,7 +183,7 @@ func TestReleaseService_RotatesOldReleasesOverLimit(t *testing.T) {
 	if len(storage.deletedPrefix) != 1 {
 		t.Fatalf("expected 1 rotated prefix delete, got %d", len(storage.deletedPrefix))
 	}
-	if storage.deletedPrefix[0] != "prod/my-app/1.0.1" {
+	if storage.deletedPrefix[0] != "my-app/1.0.1" {
 		t.Fatalf("expected oldest prefix to be deleted, got %q", storage.deletedPrefix[0])
 	}
 	if len(repo.statusUpdates) != 1 {
@@ -207,10 +201,9 @@ func TestReleaseService_DoesNotRotateWhenWithinLimit(t *testing.T) {
 		version := fmt.Sprintf("1.0.%d", i)
 		existing = append(existing, domain.Release{
 			AppName:       "my-app",
-			Environment:   "prod",
 			Version:       version,
 			Status:        "success",
-			StoragePrefix: "/prod/my-app/" + version + "/",
+			StoragePrefix: "/my-app/" + version + "/",
 			CreatedAt:     now.Add(time.Duration(-15+i) * time.Minute),
 		})
 	}
@@ -227,7 +220,6 @@ func TestReleaseService_DoesNotRotateWhenWithinLimit(t *testing.T) {
 
 	err := svc.CreateRelease(context.Background(), ReleaseInput{
 		AppName:      "my-app",
-		Environment:  "prod",
 		Version:      "2.0.0",
 		ExtractedDir: tmpDir,
 		Files: []ExtractedFile{
@@ -248,13 +240,13 @@ func TestReleaseService_DoesNotRotateWhenWithinLimit(t *testing.T) {
 func TestReleaseService_ListAvailableVersions(t *testing.T) {
 	repo := &fakeReleaseRepo{
 		activeReleases: []domain.Release{
-			{AppName: "my-app", Environment: "prod", Version: "2.0.0"},
-			{AppName: "my-app", Environment: "prod", Version: "1.9.0"},
+			{AppName: "my-app", Version: "2.0.0"},
+			{AppName: "my-app", Version: "1.9.0"},
 		},
 	}
 	svc := NewReleaseService(repo, &fakeStorage{})
 
-	versions, err := svc.ListAvailableVersions(context.Background(), "my-app", "prod")
+	versions, err := svc.ListAvailableVersions(context.Background(), "my-app")
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}

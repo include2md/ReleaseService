@@ -18,7 +18,7 @@ type MongoReleaseRepository struct {
 func NewMongoReleaseRepository(col *mongo.Collection) (*MongoReleaseRepository, error) {
 	repo := &MongoReleaseRepository{col: col}
 	idx := mongo.IndexModel{
-		Keys:    bson.D{{Key: "app_name", Value: 1}, {Key: "environment", Value: 1}, {Key: "version", Value: 1}},
+		Keys:    bson.D{{Key: "app_name", Value: 1}, {Key: "version", Value: 1}},
 		Options: options.Index().SetUnique(true),
 	}
 	_, err := col.Indexes().CreateOne(context.Background(), idx)
@@ -28,8 +28,8 @@ func NewMongoReleaseRepository(col *mongo.Collection) (*MongoReleaseRepository, 
 	return repo, nil
 }
 
-func (m *MongoReleaseRepository) Exists(ctx context.Context, appName, environment, version string) (bool, error) {
-	filter := bson.M{"app_name": appName, "environment": environment, "version": version}
+func (m *MongoReleaseRepository) Exists(ctx context.Context, appName, version string) (bool, error) {
+	filter := bson.M{"app_name": appName, "version": version}
 	count, err := m.col.CountDocuments(ctx, filter)
 	if err != nil {
 		return false, err
@@ -41,7 +41,6 @@ func (m *MongoReleaseRepository) Insert(ctx context.Context, release domain.Rele
 	_, err := m.col.InsertOne(ctx, bson.M{
 		"app_name":       release.AppName,
 		"version":        release.Version,
-		"environment":    release.Environment,
 		"status":         release.Status,
 		"storage_prefix": release.StoragePrefix,
 		"commit_sha":     release.CommitSHA,
@@ -51,11 +50,10 @@ func (m *MongoReleaseRepository) Insert(ctx context.Context, release domain.Rele
 	return err
 }
 
-func (m *MongoReleaseRepository) ListActiveByAppEnvironment(ctx context.Context, appName, environment string) ([]domain.Release, error) {
+func (m *MongoReleaseRepository) ListActiveByApp(ctx context.Context, appName string) ([]domain.Release, error) {
 	filter := bson.M{
-		"app_name":    appName,
-		"environment": environment,
-		"status":      "success",
+		"app_name": appName,
+		"status":   "success",
 	}
 	opts := options.Find().SetSort(bson.D{{Key: "created_at", Value: -1}})
 	cur, err := m.col.Find(ctx, filter, opts)
@@ -69,7 +67,6 @@ func (m *MongoReleaseRepository) ListActiveByAppEnvironment(ctx context.Context,
 		var doc struct {
 			AppName       string    `bson:"app_name"`
 			Version       string    `bson:"version"`
-			Environment   string    `bson:"environment"`
 			Status        string    `bson:"status"`
 			StoragePrefix string    `bson:"storage_prefix"`
 			CommitSHA     string    `bson:"commit_sha"`
@@ -82,7 +79,6 @@ func (m *MongoReleaseRepository) ListActiveByAppEnvironment(ctx context.Context,
 		releases = append(releases, domain.Release{
 			AppName:       doc.AppName,
 			Version:       doc.Version,
-			Environment:   doc.Environment,
 			Status:        doc.Status,
 			StoragePrefix: doc.StoragePrefix,
 			CommitSHA:     doc.CommitSHA,
@@ -96,8 +92,8 @@ func (m *MongoReleaseRepository) ListActiveByAppEnvironment(ctx context.Context,
 	return releases, nil
 }
 
-func (m *MongoReleaseRepository) UpdateStatus(ctx context.Context, appName, environment, version, status string) error {
-	filter := bson.M{"app_name": appName, "environment": environment, "version": version}
+func (m *MongoReleaseRepository) UpdateStatus(ctx context.Context, appName, version, status string) error {
+	filter := bson.M{"app_name": appName, "version": version}
 	update := bson.M{"$set": bson.M{"status": status}}
 	_, err := m.col.UpdateOne(ctx, filter, update)
 	return err

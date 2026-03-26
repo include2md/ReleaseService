@@ -29,7 +29,7 @@ func TestAssetHandler_SetsNoCacheForIndexHTML(t *testing.T) {
 	h := NewAssetHandler(fakeAssetService{contentType: "text/html", body: []byte("ok")})
 	r := setupAssetTestRouter(h)
 
-	req := httptest.NewRequest(http.MethodGet, "/assets/my-app/1.2.3/index.html?env=prod", nil)
+	req := httptest.NewRequest(http.MethodGet, "/assets/my-app/1.2.3/index.html", nil)
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 
@@ -45,7 +45,7 @@ func TestAssetHandler_SetsImmutableCacheForStaticAsset(t *testing.T) {
 	h := NewAssetHandler(fakeAssetService{contentType: "application/javascript", body: []byte("ok")})
 	r := setupAssetTestRouter(h)
 
-	req := httptest.NewRequest(http.MethodGet, "/assets/my-app/1.2.3/assets/app.js?env=prod", nil)
+	req := httptest.NewRequest(http.MethodGet, "/assets/my-app/1.2.3/assets/app.js", nil)
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 

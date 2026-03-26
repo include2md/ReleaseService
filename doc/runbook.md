@@ -32,12 +32,11 @@ curl -X POST 'http://localhost:8080/api/v1/releases' \
   -H 'Authorization: Bearer local-dev-token' \
   -F 'app_name=my-app' \
   -F 'version=1.2.3' \
-  -F 'environment=prod' \
   -F 'artifact=@sample.tar.gz'
 ```
 
 ## Quick asset read test
 
 ```bash
-curl -i 'http://localhost:8080/assets/my-app/1.2.3/index.html?env=prod'
+curl -i 'http://localhost:8080/assets/my-app/1.2.3/index.html'
 ```

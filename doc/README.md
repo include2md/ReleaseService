@@ -38,7 +38,6 @@ python -m http.server 5500
 - Bearer Token: `local-dev-token`
 - app_name: 例如 `my-app`
 - version: 例如 `1.2.3`
-- environment: 例如 `prod`
 - artifact: 選擇 `.tar.gz` 檔案
 
 按下 `Upload Release`。
@@ -47,7 +46,7 @@ python -m http.server 5500
 - 狀態為 `Upload success`
 - 回應 HTTP 狀態 `200`
 
-若版本已存在（同 `app_name + environment + version`）會回：
+若版本已存在（同 `app_name + version`）會回：
 - HTTP `409 Conflict`
 
 ### 4. Fetch Asset（讀取資產）
@@ -55,7 +54,6 @@ python -m http.server 5500
 在頁面右側填寫：
 - app: 與上傳一致（例如 `my-app`）
 - version: 與上傳一致（例如 `1.2.3`）
-- env: 與上傳一致（例如 `prod`）
 - path: 例如 `index.html` 或 `assets/app.js`
 
 按下 `Fetch Asset`。
